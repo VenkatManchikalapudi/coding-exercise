@@ -1,0 +1,21 @@
+/* Styles go here */
+.errorMsg {
+  color: red;
+  padding: 3px;
+  margin: 3px;
+}
+
+.outputMsg {
+  padding: 3px;
+  margin: 3px;
+  color: black;
+}
+
+.validateButton {
+  cursor: pointer;
+}
+
+.validateButton.invalid {
+  cursor: default;
+}
+
