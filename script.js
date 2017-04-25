@@ -1,7 +1,7 @@
 var calculateEquationApp = angular.module('calculateEquationMod', []);
 calculateEquationApp.directive('calculateEquation', [function () {
     return {
-        restrict: 'E',
+        restrict: 'EA',
         controller: 'calculateEquationCtrl',
         templateUrl: 'calculateEquation.tpl.html',
         scope: {},
@@ -12,7 +12,6 @@ calculateEquationApp.directive('calculateEquation', [function () {
 
 calculateEquationApp.controller('calculateEquationCtrl', ['$scope', 'calculateEquationParserSvc', function ($scope, calculateEquationEquationParserSvc) {
     $scope.$watch('txtInput', _.debounce(function (newVal, oldVal) {
-        console.log(newVal);
         if ($scope.calculateEquationForm.$valid) {
             if (newVal !== oldVal) {
                 $scope.$apply(function () {
@@ -29,13 +28,13 @@ calculateEquationApp.service('calculateEquationParserSvc', function () {
         return baseStr.indexOf(splitter) > -1;
     };
 
-    function getPortionStr(baseStr, baseIndex, moveIndexBy, minus) {
+    function getPortionStr(baseStr, baseIndex, moveIndexBy) {
         var i = baseIndex + moveIndexBy;
         var strSideVal = "";
         var limit = (moveIndexBy == -1) ? 0 : baseStr.length;
         while (i * moveIndexBy <= limit) {
             //move as long as parseable, then stop and return.
-            if (!isNaN(baseStr[i], minus)) {
+            if (!isNaN(baseStr[i])) {
                 if (moveIndexBy == 1) strSideVal = strSideVal + baseStr[i];
                 else strSideVal = baseStr[i] + strSideVal;
                 i += moveIndexBy;
@@ -47,19 +46,28 @@ calculateEquationApp.service('calculateEquationParserSvc', function () {
     };
 
     function resolveEquationFunc(equation, operator, resolveFunc) {
-        //minus = (typeof minus !== 'undefined');
         if (bStrContains(equation, operator)) {
             var middleIndex = equation.indexOf(operator);
-            var left = getPortionStr(equation, middleIndex, -1);
-            var right = getPortionStr(equation, middleIndex, 1);
-            equation = replaceStrFunc(equation, left + operator + right, resolveFunc(left, right));
+            var left = parseFloat(getPortionStr(equation, middleIndex, -1));
+            var right = parseFloat(getPortionStr(equation, middleIndex, 1));
+            var resolvedVal = resolveFunc(left, right);
+            equation = replaceStrFunc(equation, left + operator + right, resolvedVal);
         }
         return equation;
     };
 
+    function multiplyNumbers(left, right){
+        return left * right;
+    }
+    function divideNumbers(left, right){
+        return left / right;
+    }
+    function addNumbers(left, right){
+        return left + right;
+    }
+
     this.solveStr = function (equation) {
         // format the equation
-        equation = equation.toLowerCase();
         equation = replaceStrFunc(equation, " ", "");
         equation = replaceStrFunc(equation, "-", "+-");
         equation = replaceStrFunc(equation, "--", "+");
@@ -74,18 +82,12 @@ calculateEquationApp.service('calculateEquationParserSvc', function () {
             }
 
             if(doMultiplyFirst){
-                equation = resolveEquationFunc(equation, "*", function (leftStr, rightStr) {
-                    return parseFloat(leftStr) * parseFloat(rightStr);
-                });
+                equation = resolveEquationFunc(equation, "*", multiplyNumbers);
             }else{
-                equation = resolveEquationFunc(equation, "/", function (leftStr, rightStr) {
-                    return parseFloat(leftStr) / parseFloat(rightStr);
-                });
+                equation = resolveEquationFunc(equation, "/", divideNumbers);
             }
         }
-        while (bStrContains(equation, "+")) equation = resolveEquationFunc(equation, "+", function (l, r) {
-            return parseFloat(l) + parseFloat(r);
-        });
+        while (bStrContains(equation, "+")) equation = resolveEquationFunc(equation, "+", addNumbers);
         return !isNaN(equation) ? equation : "Finish the equation";
     };
 
