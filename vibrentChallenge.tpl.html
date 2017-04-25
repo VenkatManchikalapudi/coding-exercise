@@ -1,7 +1,0 @@
-<form name="vibrentChallengeForm" novalidate>
-  <div>
-    <input placeholder="enter simple equation only" type="text" ng-model="txtInput" ng-pattern="/^([\d\(\)\+\-\*\/\.\s])+$/" ng-required="true">
-    <span class="errorMsg" ng-show="vibrentChallengeForm.$invalid && !vibrentChallengeForm.$pristine">Enter a valid input</span>
-    <span class="outputMsg" ng-show="vibrentChallengeForm.$valid">{{output}}</span>
-  </div>
-</form>
